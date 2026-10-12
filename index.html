@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marquee Socials</title>
+    <link rel="icon" type="image/png" href="icon-32.png">
+    <style>
+        :root {
+            --bg-primary: #0d0d12;
+            --bg-secondary: #16161d;
+            --bg-tertiary: #1e1e28;
+            --accent: #8b5cf6;
+            --accent-hover: #a78bfa;
+            --accent-dim: rgba(139, 92, 246, 0.15);
+            --text-primary: #f5f5f7;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --border: #27272a;
+            --success: #22c55e;
+            --warning: #eab308;
+            --error: #ef4444;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 72px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 0;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        
+        .sidebar-logo {
+            width: 44px;
+            height: 44px;
+            margin-bottom: 16px;
+            border-radius: 12px;
+        }
+        
+        .sidebar-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .sidebar-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+        .sidebar-btn.active { background: var(--accent-dim); color: var(--accent); }
+        .sidebar-btn.active::before {
+            content: '';
+            position: absolute;
+            left: -12px;
+            width: 4px;
+            height: 24px;
+            background: var(--accent);
+            border-radius: 0 4px 4px 0;
+        }
+        .sidebar-btn svg { width: 24px; height: 24px; }
+        .sidebar-spacer { flex: 1; }
+        
+        /* Main container */
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* Tab bar */
+        .tab-bar {
+            display: flex;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 8px 16px 0;
+            gap: 4px;
+            flex-shrink: 0;
+            overflow-x: auto;
+        }
+        
+        .tab {
+            padding: 10px 16px;
+            background: var(--bg-tertiary);
+            border-radius: 10px 10px 0 0;
+            border: 1px solid var(--border);
+            border-bottom: none;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            transition: all 0.2s;
+            min-width: 120px;
+            max-width: 200px;
+        }
+        
+        .tab:hover { background: var(--bg-primary); color: var(--text-primary); }
+        .tab.active {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            margin-bottom: -1px;
+            padding-bottom: 11px;
+        }
+        
+        .tab-icon {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .tab-icon.youtube { background: #ff0000; }
+        .tab-icon.tiktok { background: #000; border: 1px solid #444; }
+        .tab-icon.instagram { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
+        .tab-icon.twitter { background: #000; }
+        .tab-icon.discord { background: #5865f2; }
+        .tab-icon.telegram { background: #0088cc; }
+        .tab-icon.dashboard { background: var(--accent); }
+        
+        .tab-title {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .tab-close {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.2s;
+            font-size: 16px;
+        }
+        
+        .tab:hover .tab-close { opacity: 0.6; }
+        .tab-close:hover { opacity: 1; background: rgba(255,255,255,0.1); }
+        
+        .new-tab-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+        
+        .new-tab-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+        
+        /* Content area */
+        .content-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .view {
+            position: absolute;
+            inset: 0;
+            display: none;
+        }
+        
+        .view.active { display: flex; }
+        
+        /* Dashboard view */
+        .dashboard-view {
+            flex-direction: column;
+        }
+        
+        .dashboard-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .dashboard-header h1 { font-size: 22px; font-weight: 600; }
+        .dashboard-header .spacer { flex: 1; }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-secondary { background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: var(--border); }
+        
+        .dashboard-grid {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            align-content: start;
+        }
+        
+        .platform-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .platform-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+        
+        .card-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .card-icon.youtube { background: #ff0000; }
+        .card-icon.tiktok { background: #000; border: 1px solid #333; }
+        .card-icon.instagram { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
+        .card-icon.twitter { background: #000; }
+        .card-icon.discord { background: #5865f2; }
+        .card-icon.telegram { background: #0088cc; }
+        
+        .card-info h3 { font-size: 18px; font-weight: 600; }
+        .card-info p { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+        
+        .card-status {
+            margin-left: auto;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        
+        .card-status.logged-in { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+        .card-status.logged-out { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+        
+        .card-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .card-btn {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        .card-btn:hover { background: var(--border); }
+        .card-btn.primary { background: var(--accent); border-color: var(--accent); color: white; }
+        .card-btn.primary:hover { background: var(--accent-hover); }
+        
+        /* Browser view */
+        .browser-view {
+            background: white;
+        }
+        
+        .browser-view iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        /* Loading overlay */
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            z-index: 10;
+        }
+        
+        .loading-overlay.hidden { display: none; }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Platform picker modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s;
+        }
+        
+        .modal-overlay.show { opacity: 1; visibility: visible; }
+        
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%;
+            max-width: 500px;
+            transform: scale(0.95);
+            transition: all 0.2s;
+        }
+        
+        .modal-overlay.show .modal { transform: scale(1); }
+        
+        .modal h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        
+        .modal-platforms {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        
+        .modal-platform {
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--bg-tertiary);
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        
+        .modal-platform:hover {
+            border-color: var(--accent);
+            background: var(--accent-dim);
+        }
+        
+        .modal-platform-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            margin: 0 auto 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-platform-name {
+            font-size: 13px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <img src="icon-48.png" alt="Marquee Socials" class="sidebar-logo">
+        
+        <button class="sidebar-btn active" title="Dashboard" onclick="showDashboard()">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg>
+        </button>
+        
+        <button class="sidebar-btn" title="YouTube" onclick="openPlatform('youtube')">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+        </button>
+        
+        <button class="sidebar-btn" title="TikTok" onclick="openPlatform('tiktok')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
+        </button>
+        
+        <button class="sidebar-btn" title="Instagram" onclick="openPlatform('instagram')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+        </button>
+        
+        <button class="sidebar-btn" title="X (Twitter)" onclick="openPlatform('twitter')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </button>
+        
+        <button class="sidebar-btn" title="Discord" onclick="openPlatform('discord')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/></svg>
+        </button>
+        
+        <button class="sidebar-btn" title="Telegram" onclick="openPlatform('telegram')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+        </button>
+        
+        <div class="sidebar-spacer"></div>
+        
+        <button class="sidebar-btn" title="Settings" onclick="openPlatform('settings')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+        </button>
+    </nav>
+    
+    <!-- Main container -->
+    <div class="main-container">
+        <!-- Tab bar -->
+        <div class="tab-bar" id="tab-bar">
+            <div class="tab active" data-view="dashboard" onclick="switchTab(this)">
+                <div class="tab-icon dashboard">
+                    <svg width="12" height="12" fill="white" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+                </div>
+                <span class="tab-title">Dashboard</span>
+            </div>
+            <button class="new-tab-btn" onclick="showPlatformPicker()" title="Open platform">+</button>
+        </div>
+        
+        <!-- Content area -->
+        <div class="content-area">
+            <!-- Dashboard view -->
+            <div class="view dashboard-view active" id="view-dashboard">
+                <div class="dashboard-header">
+                    <h1>Social Media Dashboard</h1>
+                    <div class="spacer"></div>
+                    <button class="btn btn-secondary" onclick="openAllPlatforms()">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
+                        </svg>
+                        Open All
+                    </button>
+                </div>
+                
+                <div class="dashboard-grid">
+                    <!-- YouTube -->
+                    <div class="platform-card" onclick="openPlatform('youtube')">
+                        <div class="card-header">
+                            <div class="card-icon youtube">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                            </div>
+                            <div class="card-info">
+                                <h3>YouTube</h3>
+                                <p>@OmarchyStore</p>
+                            </div>
+                            <span class="card-status logged-in">Logged In</span>
+                        </div>
+                        <div class="card-actions">
+                            <button class="card-btn" onclick="event.stopPropagation(); openPlatform('youtube')">Studio</button>
+                            <button class="card-btn primary" onclick="event.stopPropagation(); openPlatformUrl('https://studio.youtube.com/channel/content')">Upload</button>
+                        </div>
+                    </div>
+                    
+                    <!-- TikTok -->
+                    <div class="platform-card" onclick="openPlatform('tiktok')">
+                        <div class="card-header">
+                            <div class="card-icon tiktok">
+                                <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
+                            </div>
+                            <div class="card-info">
+                                <h3>TikTok</h3>
+                                <p>@omarchystore</p>
+                            </div>
+                            <span class="card-status logged-in">Logged In</span>
+                        </div>
+                        <div class="card-actions">
+                            <button class="card-btn" onclick="event.stopPropagation(); openPlatform('tiktok')">Studio</button>
+                            <button class="card-btn primary" onclick="event.stopPropagation(); openPlatformUrl('https://www.tiktok.com/tiktokstudio/upload')">Upload</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Instagram -->
+                    <div class="platform-card" onclick="openPlatform('instagram')">
+                        <div class="card-header">
+                            <div class="card-icon instagram">
+                                <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                            </div>
+                            <div class="card-info">
+                                <h3>Instagram</h3>
+                                <p>@omarchystore</p>
+                            </div>
+                            <span class="card-status logged-in">Logged In</span>
+                        </div>
+                        <div class="card-actions">
+                            <button class="card-btn" onclick="event.stopPropagation(); openPlatform('instagram')">Profile</button>
+                            <button class="card-btn primary" onclick="event.stopPropagation(); openPlatformUrl('https://www.instagram.com')">Create</button>
+                        </div>
+                    </div>
+                    
+                    <!-- X/Twitter -->
+                    <div class="platform-card" onclick="openPlatform('twitter')">
+                        <div class="card-header">
+                            <div class="card-icon twitter">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                            </div>
+                            <div class="card-info">
+                                <h3>X (Twitter)</h3>
+                                <p>@omarchy</p>
+                            </div>
+                            <span class="card-status logged-in">Logged In</span>
+                        </div>
+                        <div class="card-actions">
+                            <button class="card-btn" onclick="event.stopPropagation(); openPlatform('twitter')">Profile</button>
+                            <button class="card-btn primary" onclick="event.stopPropagation(); openPlatformUrl('https://x.com/compose/post')">Post</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Discord -->
+                    <div class="platform-card" onclick="openPlatform('discord')">
+                        <div class="card-header">
+                            <div class="card-icon discord">
+                                <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/></svg>
+                            </div>
+                            <div class="card-info">
+                                <h3>Discord</h3>
+                                <p>Omarchy Store</p>
+                            </div>
+                            <span class="card-status logged-in">Logged In</span>
+                        </div>
+                        <div class="card-actions">
+                            <button class="card-btn" onclick="event.stopPropagation(); openPlatform('discord')">Server</button>
+                            <button class="card-btn primary" onclick="event.stopPropagation(); openPlatform('discord')">Announce</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Telegram -->
+                    <div class="platform-card" onclick="openPlatform('telegram')">
+                        <div class="card-header">
+                            <div class="card-icon telegram">
+                                <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+                            </div>
+                            <div class="card-info">
+                                <h3>Telegram</h3>
+                                <p>Omarchy Store</p>
+                            </div>
+                            <span class="card-status logged-in">Logged In</span>
+                        </div>
+                        <div class="card-actions">
+                            <button class="card-btn" onclick="event.stopPropagation(); openPlatform('telegram')">Channel</button>
+                            <button class="card-btn primary" onclick="event.stopPropagation(); openPlatform('telegram')">Post</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Platform picker modal -->
+    <div class="modal-overlay" id="platform-picker" onclick="if(event.target === this) hidePlatformPicker()">
+        <div class="modal">
+            <h2>Open Platform</h2>
+            <div class="modal-platforms">
+                <div class="modal-platform" onclick="openPlatform('youtube'); hidePlatformPicker()">
+                    <div class="modal-platform-icon" style="background:#ff0000">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                    </div>
+                    <div class="modal-platform-name">YouTube</div>
+                </div>
+                <div class="modal-platform" onclick="openPlatform('tiktok'); hidePlatformPicker()">
+                    <div class="modal-platform-icon" style="background:#000;border:1px solid #444">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
+                    </div>
+                    <div class="modal-platform-name">TikTok</div>
+                </div>
+                <div class="modal-platform" onclick="openPlatform('instagram'); hidePlatformPicker()">
+                    <div class="modal-platform-icon" style="background:linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                    </div>
+                    <div class="modal-platform-name">Instagram</div>
+                </div>
+                <div class="modal-platform" onclick="openPlatform('twitter'); hidePlatformPicker()">
+                    <div class="modal-platform-icon" style="background:#000">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                    </div>
+                    <div class="modal-platform-name">X (Twitter)</div>
+                </div>
+                <div class="modal-platform" onclick="openPlatform('discord'); hidePlatformPicker()">
+                    <div class="modal-platform-icon" style="background:#5865f2">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/></svg>
+                    </div>
+                    <div class="modal-platform-name">Discord</div>
+                </div>
+                <div class="modal-platform" onclick="openPlatform('telegram'); hidePlatformPicker()">
+                    <div class="modal-platform-icon" style="background:#0088cc">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+                    </div>
+                    <div class="modal-platform-name">Telegram</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const platforms = {
+            youtube: { name: 'YouTube', url: 'https://studio.youtube.com', icon: 'youtube' },
+            tiktok: { name: 'TikTok', url: 'https://www.tiktok.com/tiktokstudio', icon: 'tiktok' },
+            instagram: { name: 'Instagram', url: 'https://www.instagram.com', icon: 'instagram' },
+            twitter: { name: 'X (Twitter)', url: 'https://x.com', icon: 'twitter' },
+            discord: { name: 'Discord', url: 'https://discord.com/channels/@me', icon: 'discord' },
+            telegram: { name: 'Telegram', url: 'https://web.telegram.org', icon: 'telegram' }
+        };
+        
+        let tabCounter = 0;
+        const openTabs = new Map();
+        
+        function openPlatform(platformId) {
+            const platform = platforms[platformId];
+            if (!platform) return;
+            
+            // Check if already open
+            if (openTabs.has(platformId)) {
+                switchToTab(platformId);
+                return;
+            }
+            
+            // Create new tab
+            createTab(platformId, platform.name, platform.url, platform.icon);
+            
+            // Update sidebar
+            updateSidebarActive(platformId);
+        }
+        
+        function openPlatformUrl(url) {
+            // Open in a new browser window
+            window.open(url, '_blank');
+        }
+        
+        function createTab(id, title, url, iconClass) {
+            const tabBar = document.getElementById('tab-bar');
+            const newTabBtn = tabBar.querySelector('.new-tab-btn');
+            
+            // Create tab element
+            const tab = document.createElement('div');
+            tab.className = 'tab';
+            tab.dataset.view = id;
+            tab.onclick = function() { switchTab(this); };
+            tab.innerHTML = `
+                <div class="tab-icon ${iconClass}">
+                    <svg width="12" height="12" fill="white" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>
+                </div>
+                <span class="tab-title">${title}</span>
+                <span class="tab-close" onclick="event.stopPropagation(); closeTab('${id}')">×</span>
+            `;
+            
+            tabBar.insertBefore(tab, newTabBtn);
+            
+            // Create view with iframe
+            const view = document.createElement('div');
+            view.className = 'view browser-view';
+            view.id = `view-${id}`;
+            view.innerHTML = `
+                <iframe src="${url}" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-downloads"></iframe>
+                <div class="loading-overlay">
+                    <div class="spinner"></div>
+                    <span>Loading ${title}...</span>
+                </div>
+            `;
+            
+            document.querySelector('.content-area').appendChild(view);
+            
+            // Hide loading when iframe loads
+            const iframe = view.querySelector('iframe');
+            const loading = view.querySelector('.loading-overlay');
+            iframe.onload = () => loading.classList.add('hidden');
+            
+            openTabs.set(id, { tab, view });
+            
+            // Switch to new tab
+            switchTab(tab);
+        }
+        
+        function switchTab(tabElement) {
+            // Deactivate all tabs
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            
+            // Activate clicked tab
+            tabElement.classList.add('active');
+            const viewId = tabElement.dataset.view;
+            document.getElementById(`view-${viewId}`).classList.add('active');
+            
+            // Update sidebar
+            updateSidebarActive(viewId);
+        }
+        
+        function switchToTab(platformId) {
+            const tabData = openTabs.get(platformId);
+            if (tabData) {
+                switchTab(tabData.tab);
+            }
+        }
+        
+        function closeTab(id) {
+            const tabData = openTabs.get(id);
+            if (!tabData) return;
+            
+            const wasActive = tabData.tab.classList.contains('active');
+            
+            // Remove elements
+            tabData.tab.remove();
+            tabData.view.remove();
+            openTabs.delete(id);
+            
+            // If was active, switch to dashboard
+            if (wasActive) {
+                const dashboardTab = document.querySelector('.tab[data-view="dashboard"]');
+                switchTab(dashboardTab);
+            }
+        }
+        
+        function showDashboard() {
+            const dashboardTab = document.querySelector('.tab[data-view="dashboard"]');
+            switchTab(dashboardTab);
+        }
+        
+        function updateSidebarActive(viewId) {
+            document.querySelectorAll('.sidebar-btn').forEach(btn => btn.classList.remove('active'));
+            
+            if (viewId === 'dashboard') {
+                document.querySelector('.sidebar-btn[title="Dashboard"]').classList.add('active');
+            } else if (platforms[viewId]) {
+                document.querySelector(`.sidebar-btn[title="${platforms[viewId].name}"]`)?.classList.add('active');
+            }
+        }
+        
+        function showPlatformPicker() {
+            document.getElementById('platform-picker').classList.add('show');
+        }
+        
+        function hidePlatformPicker() {
+            document.getElementById('platform-picker').classList.remove('show');
+        }
+        
+        function openAllPlatforms() {
+            Object.keys(platforms).forEach(id => openPlatform(id));
+        }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                hidePlatformPicker();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+# Browser profile (contains user data)
+browser-profile/
+
+# Local state
+*.log
+*.tmp
