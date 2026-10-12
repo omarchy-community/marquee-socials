@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Marquee Socials
+GenericName=Social Media Manager
+Comment=Manage all your social media accounts in one place
+Exec=electron43 /usr/share/marquee-socials/app
+Icon=marquee-socials
+Terminal=false
+Categories=Network;Social;
+Keywords=social;media;tiktok;youtube;instagram;twitter;discord;telegram;
+StartupNotify=true
+StartupWMClass=marquee-socials

@@ -1,0 +1,11 @@
+pkgname = marquee-socials
+pkgbase = marquee-socials
+pkgver = 1.1.0-1
+pkgdesc = Manage all your social media accounts in one place
+url = https://github.com/omarchy-community/marquee-socials
+builddate = 1728749400
+packager = Omarchy Development Labs
+size = 500000
+arch = any
+license = MIT
+depend = electron43

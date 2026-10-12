@@ -1,0 +1,2 @@
+#!/bin/bash
+exec electron43 /usr/share/marquee-socials/app "$@"
