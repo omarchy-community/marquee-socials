@@ -1,918 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marquee Socials</title>
-    <style>
-        :root {
-            --bg-primary: #0d0d12;
-            --bg-secondary: #16161d;
-            --bg-tertiary: #1e1e28;
-            --accent: #8b5cf6;
-            --accent-hover: #a78bfa;
-            --accent-dim: rgba(139, 92, 246, 0.15);
-            --text-primary: #f5f5f7;
-            --text-secondary: #a1a1aa;
-            --text-muted: #71717a;
-            --border: #27272a;
-            --success: #22c55e;
-        }
-        
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            user-select: none;
-        }
-        
-        /* Custom title bar */
-        .titlebar {
-            height: 36px;
-            background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 12px;
-            -webkit-app-region: drag;
-            flex-shrink: 0;
-        }
-        
-        .titlebar-title {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text-secondary);
-        }
-        
-        .titlebar-controls {
-            display: flex;
-            gap: 8px;
-            -webkit-app-region: no-drag;
-        }
-        
-        .titlebar-btn {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            border: none;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-        
-        .titlebar-btn:hover { opacity: 0.8; }
-        .titlebar-btn.close { background: #ff5f57; }
-        .titlebar-btn.minimize { background: #febc2e; }
-        .titlebar-btn.maximize { background: #28c840; }
-        
-        /* Main layout */
-        .app-container {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
-        
-        /* Sidebar */
-        .sidebar {
-            width: 72px;
-            background: var(--bg-secondary);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 16px 0;
-            gap: 8px;
-            flex-shrink: 0;
-        }
-        
-        .sidebar-logo {
-            width: 40px;
-            height: 40px;
-            margin-bottom: 12px;
-            border-radius: 10px;
-        }
-        
-        .sidebar-btn {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-secondary);
-            transition: all 0.2s;
-            position: relative;
-        }
-        
-        .sidebar-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
-        .sidebar-btn.active { background: var(--accent-dim); color: var(--accent); }
-        .sidebar-btn.active::before {
-            content: '';
-            position: absolute;
-            left: -14px;
-            width: 4px;
-            height: 20px;
-            background: var(--accent);
-            border-radius: 0 4px 4px 0;
-        }
-        .sidebar-btn svg { width: 22px; height: 22px; }
-        .sidebar-spacer { flex: 1; }
-        
-        /* Main content area */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        /* Tab bar */
-        .tab-bar {
-            display: flex;
-            background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border);
-            padding: 8px 12px 0;
-            gap: 4px;
-            flex-shrink: 0;
-            overflow-x: auto;
-        }
-        
-        .tab {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border);
-            border-bottom: none;
-            border-radius: 8px 8px 0 0;
-            cursor: pointer;
-            color: var(--text-secondary);
-            font-size: 13px;
-            transition: all 0.2s;
-            min-width: 120px;
-            max-width: 200px;
-        }
-        
-        .tab:hover { background: var(--bg-primary); color: var(--text-primary); }
-        .tab.active {
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            border-color: var(--accent);
-            border-bottom: 1px solid var(--bg-primary);
-            margin-bottom: -1px;
-        }
-        
-        .tab-icon { width: 16px; height: 16px; flex-shrink: 0; }
-        .tab-title { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        
-        .tab-close {
-            width: 18px;
-            height: 18px;
-            border-radius: 4px;
-            border: none;
-            background: transparent;
-            color: var(--text-muted);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: all 0.2s;
-        }
-        
-        .tab:hover .tab-close { opacity: 1; }
-        .tab-close:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
-        
-        .tab-add {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            border: none;
-            background: transparent;
-            color: var(--text-muted);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-left: 4px;
-        }
-        
-        .tab-add:hover { background: var(--bg-tertiary); color: var(--text-primary); }
-        
-        /* Webview container */
-        .webview-container {
-            flex: 1;
-            position: relative;
-            background: var(--bg-primary);
-        }
-        
-        .webview-wrapper {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            display: none;
-        }
-        
-        .webview-wrapper.active { display: block; }
-        
-        webview {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-        
-        /* Dashboard view */
-        .dashboard {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            padding: 24px;
-            overflow-y: auto;
-            display: none;
-        }
-        
-        .dashboard.active { display: block; }
-        
-        .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-        }
-        
-        .dashboard-header h1 {
-            font-size: 24px;
-            font-weight: 600;
-        }
-        
-        .open-all-btn {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
-        }
-        
-        .open-all-btn:hover { background: var(--accent-hover); }
-        .open-all-btn svg { width: 18px; height: 18px; }
-        
-        /* Platform grid */
-        .platform-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 16px;
-        }
-        
-        .platform-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .platform-card:hover {
-            border-color: var(--accent);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 32px rgba(139, 92, 246, 0.15);
-        }
-        
-        .platform-card-header {
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        
-        .platform-icon {
-            width: 52px;
-            height: 52px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .platform-icon svg { width: 28px; height: 28px; }
-        
-        .platform-info { flex: 1; }
-        .platform-name { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
-        .platform-desc { font-size: 12px; color: var(--text-secondary); }
-        
-        .platform-card-footer {
-            padding: 12px 20px;
-            background: var(--bg-tertiary);
-            border-top: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .platform-status {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-        
-        .status-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--success);
-        }
-        
-        .pin-btn {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text-secondary);
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            transition: all 0.2s;
-        }
-        
-        .pin-btn:hover { background: var(--accent); border-color: var(--accent); color: white; }
-        .pin-btn svg { width: 14px; height: 14px; }
-        
-        /* Platform colors */
-        .youtube .platform-icon { background: #ff0000; color: white; }
-        .tiktok .platform-icon { background: #000000; color: white; }
-        .instagram .platform-icon { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); color: white; }
-        .twitter .platform-icon { background: #000000; color: white; }
-        .discord .platform-icon { background: #5865f2; color: white; }
-        .telegram .platform-icon { background: #0088cc; color: white; }
-        
-        /* Context menu */
-        .context-menu {
-            position: fixed;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 4px;
-            min-width: 160px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-            z-index: 1000;
-            display: none;
-        }
-        
-        .context-menu.visible { display: block; }
-        
-        .context-menu-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 13px;
-            color: var(--text-primary);
-        }
-        
-        .context-menu-item:hover { background: var(--accent-dim); }
-        .context-menu-item svg { width: 16px; height: 16px; color: var(--text-secondary); }
-        
-        /* Toast notification */
-        .toast {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: var(--bg-secondary);
-            border: 1px solid var(--accent);
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 14px;
-            opacity: 0;
-            transition: all 0.3s;
-            z-index: 1001;
-        }
-        
-        .toast.visible {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
-        
-        /* Loading spinner */
-        .loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 16px;
-        }
-        
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid var(--border);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
-        .loading-text { color: var(--text-secondary); font-size: 14px; }
-        
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg-primary); }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-    </style>
+<meta charset="UTF-8">
+<title>Marquee Socials</title>
+<link rel="stylesheet" href="app.css">
 </head>
 <body>
-    <!-- Custom title bar -->
-    <div class="titlebar">
-        <span class="titlebar-title">Marquee Socials</span>
-        <div class="titlebar-controls">
-            <button class="titlebar-btn minimize" onclick="minimizeWindow()"></button>
-            <button class="titlebar-btn maximize" onclick="maximizeWindow()"></button>
-            <button class="titlebar-btn close" onclick="closeWindow()"></button>
-        </div>
+<div class="titlebar">
+  <div class="tb-left"><img src="icons/24x24.png" class="tb-logo"><span class="tb-title">Marquee Socials</span><span class="tb-ws" id="tb-ws"></span></div>
+  <div class="tb-mid"><span class="tb-hint">Ctrl+K search · Ctrl+N compose · Ctrl+1-9 tabs</span></div>
+  <div class="titlebar-controls">
+    <button class="tb-btn" id="dnd-btn" title="Do Not Disturb (Ctrl+Shift+D)" onclick="toggleDnd()">🔔</button>
+    <button class="titlebar-btn minimize" onclick="win('minimize')"></button>
+    <button class="titlebar-btn maximize" onclick="win('maximize')"></button>
+    <button class="titlebar-btn close" onclick="win('close')"></button>
+  </div>
+</div>
+
+<div class="app-container">
+  <div class="sidebar" id="sidebar">
+    <button class="sidebar-btn active" data-view="dashboard" title="Dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></button>
+    <button class="sidebar-btn" data-view="compose" title="Compose (Ctrl+N)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>
+    <button class="sidebar-btn" data-view="calendar" title="Calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></button>
+    <button class="sidebar-btn" data-view="media" title="Media Library"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></button>
+    <div class="sidebar-sep"></div>
+    <div class="sidebar-platforms" id="sidebar-platforms"></div>
+    <div class="sidebar-spacer"></div>
+    <button class="sidebar-btn" data-view="settings" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
+  </div>
+
+  <div class="main-content">
+    <div class="tab-bar" id="tab-bar">
+      <div class="tab active" data-tab="dashboard"><span class="tab-title">Dashboard</span></div>
+      <button class="tab-add" onclick="showView('dashboard')" title="New Tab (Ctrl+T)">+</button>
     </div>
-    
-    <div class="app-container">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <img src="icons/48x48.png" alt="Marquee" class="sidebar-logo">
-            
-            <button class="sidebar-btn active" data-view="dashboard" title="Dashboard">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="3" width="7" height="7" rx="1"/>
-                    <rect x="14" y="3" width="7" height="7" rx="1"/>
-                    <rect x="14" y="14" width="7" height="7" rx="1"/>
-                    <rect x="3" y="14" width="7" height="7" rx="1"/>
-                </svg>
-            </button>
-            
-            <button class="sidebar-btn" data-platform="youtube" title="YouTube Studio">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                </svg>
-            </button>
-            
-            <button class="sidebar-btn" data-platform="tiktok" title="TikTok Studio">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
-                </svg>
-            </button>
-            
-            <button class="sidebar-btn" data-platform="instagram" title="Instagram">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                </svg>
-            </button>
-            
-            <button class="sidebar-btn" data-platform="twitter" title="X (Twitter)">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                </svg>
-            </button>
-            
-            <button class="sidebar-btn" data-platform="discord" title="Discord">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/>
-                </svg>
-            </button>
-            
-            <button class="sidebar-btn" data-platform="telegram" title="Telegram">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
-                </svg>
-            </button>
-            
-            <div class="sidebar-spacer"></div>
-            
-            <button class="sidebar-btn" data-view="settings" title="Settings">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="3"/>
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                </svg>
-            </button>
-        </div>
-        
-        <!-- Main content -->
-        <div class="main-content">
-            <!-- Tab bar -->
-            <div class="tab-bar" id="tab-bar">
-                <div class="tab active" data-tab="dashboard">
-                    <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="3" width="7" height="7" rx="1"/>
-                        <rect x="14" y="3" width="7" height="7" rx="1"/>
-                        <rect x="14" y="14" width="7" height="7" rx="1"/>
-                        <rect x="3" y="14" width="7" height="7" rx="1"/>
-                    </svg>
-                    <span class="tab-title">Dashboard</span>
-                </div>
-                <button class="tab-add" onclick="showDashboard()" title="New Tab">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="12" y1="5" x2="12" y2="19"/>
-                        <line x1="5" y1="12" x2="19" y2="12"/>
-                    </svg>
-                </button>
-            </div>
-            
-            <!-- Webview container -->
-            <div class="webview-container">
-                <!-- Dashboard -->
-                <div class="dashboard active" id="dashboard">
-                    <div class="dashboard-header">
-                        <h1>All Platforms</h1>
-                        <button class="open-all-btn" onclick="openAllPlatforms()">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="3" width="7" height="7" rx="1"/>
-                                <rect x="14" y="3" width="7" height="7" rx="1"/>
-                                <rect x="14" y="14" width="7" height="7" rx="1"/>
-                                <rect x="3" y="14" width="7" height="7" rx="1"/>
-                            </svg>
-                            Open All
-                        </button>
-                    </div>
-                    
-                    <div class="platform-grid">
-                        <div class="platform-card youtube" onclick="openPlatform('youtube')" oncontextmenu="showContextMenu(event, 'youtube')">
-                            <div class="platform-card-header">
-                                <div class="platform-icon">
-                                    <svg viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                                    </svg>
-                                </div>
-                                <div class="platform-info">
-                                    <div class="platform-name">YouTube Studio</div>
-                                    <div class="platform-desc">Manage videos, analytics, comments</div>
-                                </div>
-                            </div>
-                            <div class="platform-card-footer">
-                                <div class="platform-status"><span class="status-dot"></span>Ready</div>
-                                <button class="pin-btn" onclick="event.stopPropagation(); pinToDock('youtube')">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v10m0 0l-4-4m4 4l4-4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
-                                    Pin
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="platform-card tiktok" onclick="openPlatform('tiktok')" oncontextmenu="showContextMenu(event, 'tiktok')">
-                            <div class="platform-card-header">
-                                <div class="platform-icon">
-                                    <svg viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
-                                    </svg>
-                                </div>
-                                <div class="platform-info">
-                                    <div class="platform-name">TikTok Studio</div>
-                                    <div class="platform-desc">Upload and manage content</div>
-                                </div>
-                            </div>
-                            <div class="platform-card-footer">
-                                <div class="platform-status"><span class="status-dot"></span>Ready</div>
-                                <button class="pin-btn" onclick="event.stopPropagation(); pinToDock('tiktok')">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v10m0 0l-4-4m4 4l4-4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
-                                    Pin
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="platform-card instagram" onclick="openPlatform('instagram')" oncontextmenu="showContextMenu(event, 'instagram')">
-                            <div class="platform-card-header">
-                                <div class="platform-icon">
-                                    <svg viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                                    </svg>
-                                </div>
-                                <div class="platform-info">
-                                    <div class="platform-name">Instagram</div>
-                                    <div class="platform-desc">Share photos, reels, stories</div>
-                                </div>
-                            </div>
-                            <div class="platform-card-footer">
-                                <div class="platform-status"><span class="status-dot"></span>Ready</div>
-                                <button class="pin-btn" onclick="event.stopPropagation(); pinToDock('instagram')">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v10m0 0l-4-4m4 4l4-4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
-                                    Pin
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="platform-card twitter" onclick="openPlatform('twitter')" oncontextmenu="showContextMenu(event, 'twitter')">
-                            <div class="platform-card-header">
-                                <div class="platform-icon">
-                                    <svg viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                                    </svg>
-                                </div>
-                                <div class="platform-info">
-                                    <div class="platform-name">X (Twitter)</div>
-                                    <div class="platform-desc">Post and engage with followers</div>
-                                </div>
-                            </div>
-                            <div class="platform-card-footer">
-                                <div class="platform-status"><span class="status-dot"></span>Ready</div>
-                                <button class="pin-btn" onclick="event.stopPropagation(); pinToDock('twitter')">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v10m0 0l-4-4m4 4l4-4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
-                                    Pin
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="platform-card discord" onclick="openPlatform('discord')" oncontextmenu="showContextMenu(event, 'discord')">
-                            <div class="platform-card-header">
-                                <div class="platform-icon">
-                                    <svg viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/>
-                                    </svg>
-                                </div>
-                                <div class="platform-info">
-                                    <div class="platform-name">Discord</div>
-                                    <div class="platform-desc">Manage servers and community</div>
-                                </div>
-                            </div>
-                            <div class="platform-card-footer">
-                                <div class="platform-status"><span class="status-dot"></span>Ready</div>
-                                <button class="pin-btn" onclick="event.stopPropagation(); pinToDock('discord')">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v10m0 0l-4-4m4 4l4-4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
-                                    Pin
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="platform-card telegram" onclick="openPlatform('telegram')" oncontextmenu="showContextMenu(event, 'telegram')">
-                            <div class="platform-card-header">
-                                <div class="platform-icon">
-                                    <svg viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
-                                    </svg>
-                                </div>
-                                <div class="platform-info">
-                                    <div class="platform-name">Telegram</div>
-                                    <div class="platform-desc">Manage channels and groups</div>
-                                </div>
-                            </div>
-                            <div class="platform-card-footer">
-                                <div class="platform-status"><span class="status-dot"></span>Ready</div>
-                                <button class="pin-btn" onclick="event.stopPropagation(); pinToDock('telegram')">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v10m0 0l-4-4m4 4l4-4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
-                                    Pin
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="nav-bar" id="nav-bar">
+      <button onclick="navAct('back')" title="Back (Alt+←)">←</button><button onclick="navAct('fwd')" title="Forward (Alt+→)">→</button><button onclick="navAct('reload')" title="Reload (Ctrl+R)">↻</button>
+      <span class="nav-url" id="nav-url"></span>
+      <button onclick="navAct('zoomout')" title="Zoom out (Ctrl+-)">−</button><span id="nav-zoom">100%</span><button onclick="navAct('zoomin')" title="Zoom in (Ctrl+=)">+</button>
+      <button onclick="navAct('home')" title="Platform home">⌂</button><button onclick="navAct('external')" title="Open in system browser">↗</button>
     </div>
-    
-    <!-- Context menu -->
-    <div class="context-menu" id="context-menu">
-        <div class="context-menu-item" onclick="openInTab()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <path d="M3 9h18"/>
-            </svg>
-            Open in Tab
+
+    <div class="webview-container">
+      <!-- DASHBOARD -->
+      <div class="view active" id="view-dashboard">
+        <div class="dashboard-header"><h1>All Platforms</h1>
+          <div class="hdr-actions"><input id="dash-search" placeholder="Search platforms…" oninput="renderDashboard()"><button class="btn" onclick="openAllPlatforms()">Open All</button><button class="btn primary" onclick="showView('compose')">✎ Compose</button></div></div>
+        <div class="upcoming" id="upcoming"></div>
+        <div class="platform-grid" id="platform-grid"></div>
+      </div>
+
+      <!-- COMPOSE -->
+      <div class="view" id="view-compose">
+        <div class="dashboard-header"><h1>Compose</h1><div class="hdr-actions">
+          <select id="tpl-select" onchange="applyTemplate(this.value)"><option value="">Templates…</option></select>
+          <button class="btn" onclick="saveTemplate()">Save as template</button>
+          <button class="btn" onclick="saveDraft()">Save draft</button></div></div>
+        <div class="compose-grid">
+          <div class="compose-left">
+            <label>Master caption <span class="muted">(write once, tweak per platform)</span></label>
+            <textarea id="master" rows="9" placeholder="Write your post… use {{title}} {{link}} in templates" oninput="syncVariants()"></textarea>
+            <div class="row"><label>Hashtag groups</label><div id="hashtag-groups" class="chips"></div><button class="btn sm" onclick="newHashtagGroup()">+ group</button></div>
+            <div class="row"><label>Attach from media library</label><div id="compose-media" class="chips"></div><button class="btn sm" onclick="showView('media')">Open library</button></div>
+            <div class="row"><label>Schedule</label><input type="datetime-local" id="sched-at"><button class="btn sm" onclick="suggestTime()">Best time</button><span class="muted" id="sched-hint"></span></div>
+            <div class="row"><label>Platforms</label><div id="compose-platforms" class="chips"></div></div>
+            <div class="row actions"><button class="btn primary" onclick="schedulePost()">Schedule</button><button class="btn" onclick="postNow()">Post now (opens tabs, caption copied)</button></div>
+          </div>
+          <div class="compose-right" id="variants"></div>
         </div>
-        <div class="context-menu-item" onclick="pinFromMenu()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 2v10m0 0l-4-4m4 4l4-4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/>
-            </svg>
-            Pin to Dock
+        <h2 class="sub">Drafts</h2><div id="drafts" class="list"></div>
+      </div>
+
+      <!-- CALENDAR -->
+      <div class="view" id="view-calendar">
+        <div class="dashboard-header"><h1 id="cal-title">Calendar</h1><div class="hdr-actions">
+          <button class="btn" onclick="calMove(-1)">‹</button><button class="btn" onclick="calToday()">Today</button><button class="btn" onclick="calMove(1)">›</button>
+          <button class="btn" id="cal-mode-btn" onclick="calToggleMode()">Week view</button>
+          <button class="btn" onclick="showBestTimes()">Best times</button></div></div>
+        <div id="calendar"></div>
+        <h2 class="sub">Queue</h2><div id="queue" class="list"></div>
+        <h2 class="sub">Posted log</h2><div id="postlog" class="list"></div>
+      </div>
+
+      <!-- MEDIA -->
+      <div class="view" id="view-media">
+        <div class="dashboard-header"><h1>Media Library</h1><div class="hdr-actions"><button class="btn primary" onclick="mediaAdd()">+ Add files</button></div></div>
+        <div class="media-grid" id="media-grid"></div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="view" id="view-settings">
+        <div class="dashboard-header"><h1>Settings</h1></div>
+        <div class="settings-grid">
+          <section><h2>Workspaces</h2><p class="muted">Each workspace is a fully separate login session — run several accounts per platform.</p><div id="ws-list" class="list"></div><div class="row"><input id="ws-new" placeholder="New workspace name"><button class="btn" onclick="addWorkspace()">Add</button></div>
+            <div class="row"><button class="btn" onclick="importLogins()">Import logins from Omarchy Social browser</button><button class="btn danger" onclick="clearWorkspace()">Sign out everything in this workspace</button></div></section>
+          <section><h2>Platforms</h2><p class="muted">Toggle which services show in the sidebar. Add any site as a custom service.</p><div id="plat-toggles" class="list"></div>
+            <div class="row"><input id="custom-name" placeholder="Name"><input id="custom-url" placeholder="https://…"><button class="btn" onclick="addCustom()">Add custom</button></div></section>
+          <section><h2>Notifications</h2><div class="row"><label><input type="checkbox" id="set-notify" onchange="saveSettings()"> Desktop notifications for unread activity</label></div><div class="row"><label><input type="checkbox" id="set-remind" onchange="saveSettings()"> Remind me when a scheduled post is due</label></div><div class="row"><label>Remind <input type="number" id="set-lead" min="0" max="120" style="width:60px" onchange="saveSettings()"> min before</label></div><div class="row"><label><input type="checkbox" id="set-hibernate" onchange="saveSettings()"> Hibernate tabs unused for 30 min (saves RAM)</label></div></section>
+          <section><h2>Shortcuts</h2><table class="kbd"><tr><td>Ctrl+N</td><td>Compose</td></tr><tr><td>Ctrl+K</td><td>Quick switcher</td></tr><tr><td>Ctrl+T</td><td>Dashboard</td></tr><tr><td>Ctrl+W</td><td>Close tab</td></tr><tr><td>Ctrl+Tab / Ctrl+Shift+Tab</td><td>Next / previous tab</td></tr><tr><td>Ctrl+1…9</td><td>Jump to tab</td></tr><tr><td>Ctrl+R / Alt+← →</td><td>Reload / back / forward</td></tr><tr><td>Ctrl+Shift+D</td><td>Do Not Disturb</td></tr><tr><td>Ctrl+B</td><td>Toggle sidebar</td></tr></table></section>
+          <section><h2>About</h2><p>Marquee Socials <b id="about-ver"></b> · Omarchy Development Labs</p><p class="muted">Human-first: you press Post on every platform. Marquee never automates uploads, so your accounts stay safe.</p></section>
         </div>
+      </div>
     </div>
-    
-    <!-- Toast -->
-    <div class="toast" id="toast"></div>
-    
-    <script>
-        const { ipcRenderer } = require('electron');
-        
-        // Platform data
-        const platforms = {
-            youtube: { name: 'YouTube Studio', url: 'https://studio.youtube.com', color: '#ff0000' },
-            tiktok: { name: 'TikTok Studio', url: 'https://www.tiktok.com/tiktokstudio/content', color: '#000000' },
-            instagram: { name: 'Instagram', url: 'https://www.instagram.com', color: '#e1306c' },
-            twitter: { name: 'X', url: 'https://x.com', color: '#000000' },
-            discord: { name: 'Discord', url: 'https://discord.com/app', color: '#5865f2' },
-            telegram: { name: 'Telegram', url: 'https://web.telegram.org', color: '#0088cc' }
-        };
-        
-        const CHROME_UA = navigator.userAgent.replace(/ ?Electron\/[\d.]+/, '').replace(/ ?marquee-socials\/[\d.]+/, '');
-        let openTabs = {};
-        let activeTab = 'dashboard';
-        let contextMenuPlatform = null;
-        
-        // Window controls
-        function minimizeWindow() { ipcRenderer.send('window-minimize'); }
-        function maximizeWindow() { ipcRenderer.send('window-maximize'); }
-        function closeWindow() { ipcRenderer.send('window-close'); }
-        
-        // Open platform in a tab
-        function openPlatform(platform) {
-            if (openTabs[platform]) {
-                switchToTab(platform);
-                return;
-            }
-            
-            const p = platforms[platform];
-            
-            // Create tab
-            const tabBar = document.getElementById('tab-bar');
-            const addBtn = tabBar.querySelector('.tab-add');
-            
-            const tab = document.createElement('div');
-            tab.className = 'tab';
-            tab.dataset.tab = platform;
-            tab.innerHTML = `
-                <span class="tab-title">${p.name}</span>
-                <button class="tab-close" onclick="event.stopPropagation(); closeTab('${platform}')">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"/>
-                        <line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
-                </button>
-            `;
-            tab.onclick = () => switchToTab(platform);
-            tabBar.insertBefore(tab, addBtn);
-            
-            // Create webview
-            const container = document.querySelector('.webview-container');
-            const wrapper = document.createElement('div');
-            wrapper.className = 'webview-wrapper';
-            wrapper.id = `view-${platform}`;
-            wrapper.innerHTML = `
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <div class="loading-text">Loading ${p.name}...</div>
-                </div>
-                <webview src="${p.url}" partition="persist:marquee-socials" useragent="${CHROME_UA}" allowpopups></webview>
-            `;
-            container.appendChild(wrapper);
-            
-            const webview = wrapper.querySelector('webview');
-            const loading = wrapper.querySelector('.loading');
-            
-            webview.addEventListener('did-finish-load', () => {
-                loading.style.display = 'none';
-            });
-            
-            webview.addEventListener('did-fail-load', () => {
-                loading.querySelector('.loading-text').textContent = 'Failed to load. Click to retry.';
-                loading.style.cursor = 'pointer';
-                loading.onclick = () => webview.reload();
-            });
-            
-            openTabs[platform] = { tab, wrapper, webview };
-            switchToTab(platform);
-        }
-        
-        // Switch to tab
-        function switchToTab(tabId) {
-            // Update tab active states
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            const activeTabEl = document.querySelector(`.tab[data-tab="${tabId}"]`);
-            if (activeTabEl) activeTabEl.classList.add('active');
-            
-            // Update sidebar
-            document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
-            const sidebarBtn = document.querySelector(`.sidebar-btn[data-platform="${tabId}"], .sidebar-btn[data-view="${tabId}"]`);
-            if (sidebarBtn) sidebarBtn.classList.add('active');
-            
-            // Show correct view
-            document.getElementById('dashboard').classList.remove('active');
-            document.querySelectorAll('.webview-wrapper').forEach(w => w.classList.remove('active'));
-            
-            if (tabId === 'dashboard') {
-                document.getElementById('dashboard').classList.add('active');
-            } else if (openTabs[tabId]) {
-                openTabs[tabId].wrapper.classList.add('active');
-            }
-            
-            activeTab = tabId;
-        }
-        
-        // Close tab
-        function closeTab(platform) {
-            if (!openTabs[platform]) return;
-            
-            openTabs[platform].tab.remove();
-            openTabs[platform].wrapper.remove();
-            delete openTabs[platform];
-            
-            if (activeTab === platform) {
-                switchToTab('dashboard');
-            }
-        }
-        
-        // Show dashboard
-        function showDashboard() {
-            switchToTab('dashboard');
-        }
-        
-        // Open all platforms
-        function openAllPlatforms() {
-            Object.keys(platforms).forEach((p, i) => {
-                setTimeout(() => openPlatform(p), i * 200);
-            });
-        }
-        
-        // Pin to dock
-        function pinToDock(platform) {
-            ipcRenderer.send('pin-to-dock', platform);
-        }
-        
-        // Context menu
-        function showContextMenu(event, platform) {
-            event.preventDefault();
-            contextMenuPlatform = platform;
-            
-            const menu = document.getElementById('context-menu');
-            menu.style.left = event.clientX + 'px';
-            menu.style.top = event.clientY + 'px';
-            menu.classList.add('visible');
-        }
-        
-        function hideContextMenu() {
-            document.getElementById('context-menu').classList.remove('visible');
-        }
-        
-        function openInTab() {
-            if (contextMenuPlatform) openPlatform(contextMenuPlatform);
-            hideContextMenu();
-        }
-        
-        function pinFromMenu() {
-            if (contextMenuPlatform) pinToDock(contextMenuPlatform);
-            hideContextMenu();
-        }
-        
-        document.addEventListener('click', hideContextMenu);
-        
-        // Toast notification
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.classList.add('visible');
-            setTimeout(() => toast.classList.remove('visible'), 3000);
-        }
-        
-        // Listen for pin result
-        ipcRenderer.on('pin-result', (event, data) => {
-            if (data.success) {
-                showToast(`${data.platform} pinned to dock!`);
-            }
-        });
-        
-        // Sidebar click handlers
-        document.querySelectorAll('.sidebar-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const view = btn.dataset.view;
-                const platform = btn.dataset.platform;
-                
-                if (view === 'dashboard') {
-                    showDashboard();
-                } else if (view === 'settings') {
-                    showToast('Settings coming soon!');
-                } else if (platform) {
-                    openPlatform(platform);
-                }
-            });
-        });
-        
-        // Check for startup platform
-        if (typeof startPlatform !== 'undefined' && startPlatform) {
-            openPlatform(startPlatform);
-        }
-    </script>
+  </div>
+</div>
+
+<div class="context-menu" id="context-menu"></div>
+<div class="modal" id="modal"><div class="modal-box" id="modal-box"></div></div>
+<div class="quick" id="quick"><input id="quick-input" placeholder="Jump to…" oninput="quickRender()" onkeydown="quickKey(event)"><div id="quick-list"></div></div>
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
 </body>
 </html>
