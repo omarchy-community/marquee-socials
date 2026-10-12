@@ -34,9 +34,13 @@ function createWindow() {
     mainWindow.loadFile('index.html');
 
     // Webview guests: never spawn separate windows; navigate in-place instead
-    mainWindow.webContents.on('did-attach-webview', (_e, guest) => {
-        guest.setWindowOpenHandler(({ url }) => { guest.loadURL(url); return { action: 'deny' }; });
-    });
+    const { webContents } = require('electron');
+    const bindGuest = guest => {
+        if (guest._marqueeBound) return; guest._marqueeBound = true;
+        guest.setWindowOpenHandler(({ url }) => { console.log('guest window-open', url); mainWindow.webContents.send('open-link', { url, guestId: guest.id }); return { action: 'deny' }; });
+    };
+    mainWindow.webContents.on('did-attach-webview', (_e, guest) => bindGuest(guest));
+    app.on('web-contents-created', (_e, wc) => { if (wc.getType() === 'webview') bindGuest(wc); });
     mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
 
     mainWindow.on('maximize', () => mainWindow.webContents.send('win-state', true));

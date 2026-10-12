@@ -1,5 +1,5 @@
 const { ipcRenderer } = require('electron');
-const VERSION = '1.2.0';
+const VERSION = '1.2.1';
 const call = (ch, ...a) => ipcRenderer.invoke(ch, ...a);
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -58,7 +58,7 @@ function platforms() {
   const ids = [...S.settings.order.filter(i => all[i]), ...Object.keys(all).filter(i => !S.settings.order.includes(i))];
   return ids.filter(i => S.settings.enabled.includes(i) || all[i].custom).map(i => ({ id: i, ...all[i] }));
 }
-const plat = id => platforms().find(p => p.id === id) || (BUILTIN[id] ? { id, ...BUILTIN[id] } : { id, name: id, url: '', home: '', color: '#444', limit: 5000, tags: 0, best: { days: [], hours: [] } });
+const plat = id => LINKS[id] || platforms().find(p => p.id === id) || (BUILTIN[id] ? { id, ...BUILTIN[id] } : { id, name: id, url: '', home: '', color: '#444', limit: 5000, tags: 0, best: { days: [], hours: [] } });
 const ico = p => I[p.icon || p.id] || I.custom;
 
 // ---------- window ----------
@@ -75,6 +75,7 @@ function showView(v) {
   document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.toggle('active', b.dataset.view === v || b.dataset.platform === v));
   document.querySelectorAll('.view').forEach(x => x.classList.toggle('active', x.id === 'view-' + v));
   document.querySelectorAll('.webview-wrapper').forEach(w => w.classList.toggle('active', w.id === 'wv-' + v));
+  for (const [id, t] of Object.entries(openTabs)) { try { t.webview.setAudioMuted(id !== v); } catch (_) {} }
   $('#nav-bar').classList.toggle('show', !!openTabs[v]);
   if (openTabs[v]) { lastUsed[v] = Date.now(); clearBadge(v); updateNav(v); if (openTabs[v].hibernated) wake(v); }
   if (v === 'dashboard') renderDashboard(); if (v === 'compose') renderCompose(); if (v === 'calendar') renderCalendar(); if (v === 'media') renderMedia(); if (v === 'settings') renderSettings();
@@ -91,17 +92,28 @@ function openPlatform(id, url) {
   $('#tab-bar').insertBefore(tab, $('.tab-add'));
   const wrap = document.createElement('div'); wrap.className = 'webview-wrapper'; wrap.id = 'wv-' + id;
   wrap.innerHTML = `<div class="loading"><div class="spinner"></div><div>Loading ${esc(p.name)}…</div></div>`;
-  const wv = document.createElement('webview'); wv.setAttribute('partition', partition()); wv.setAttribute('useragent', CHROME_UA); wv.src = url || p.url;
-  wrap.appendChild(wv); $('.webview-container').appendChild(wrap);
+  wrap.insertAdjacentHTML('beforeend', `<webview partition="${partition()}" useragent="${esc(CHROME_UA)}" preload="file://${__dirname}/preload-guest.js" webpreferences="sandbox=no,contextIsolation=no" src="${esc(url || p.url)}"></webview>`);
+  const wv = wrap.querySelector('webview'); $('.webview-container').appendChild(wrap);
   const loading = wrap.querySelector('.loading');
   wv.addEventListener('did-finish-load', () => { loading.style.display = 'none'; updateNav(id); });
   wv.addEventListener('did-navigate', () => updateNav(id)); wv.addEventListener('did-navigate-in-page', () => updateNav(id));
   wv.addEventListener('did-fail-load', e => { if (e.errorCode === -3) return; loading.innerHTML = `<div>Couldn't load ${esc(p.name)}</div><button class="btn" onclick="openTabs['${id}'].webview.reload()">Retry</button>`; });
   wv.addEventListener('page-title-updated', e => onTitle(id, e.title));
-  wv.addEventListener('new-window', e => { e.preventDefault(); wv.loadURL(e.url); });
+  wv.addEventListener('ipc-message', e => { if (e.channel === 'open-link') openLink(e.args[0], id); });
   openTabs[id] = { tab, wrap, webview: wv, hibernated: false, unread: 0 }; lastUsed[id] = Date.now();
   showView(id);
 }
+let linkN = 0;
+function openLink(url, fromId) {
+  const parent = plat(fromId); const id = 'link' + (++linkN);
+  const p = { id, name: parent.name ? parent.name.split(' ')[0] : 'Link', url, home: url, color: parent.color || '#444', limit: 5000, tags: 0, best: { days: [], hours: [] } };
+  LINKS[id] = p; openPlatform(id, url);
+  // follow the page title
+  openTabs[id].webview.addEventListener('page-title-updated', e => { const t = openTabs[id]; if (t) t.tab.querySelector('.tab-title').textContent = e.title.slice(0, 28); });
+  // pause autoplay media on link tabs (TikTok/IG public pages autoplay)
+  openTabs[id].webview.addEventListener('did-finish-load', () => { try { openTabs[id].webview.executeJavaScript("document.querySelectorAll('video').forEach(v=>{v.pause();v.muted=true;})"); } catch (_) {} });
+}
+const LINKS = {};
 function closeTab(id) { if (!openTabs[id]) return; openTabs[id].tab.remove(); openTabs[id].wrap.remove(); delete openTabs[id]; if (activeTab === id) showView('dashboard'); }
 function openAllPlatforms() { platforms().forEach((p, i) => setTimeout(() => { const keep = activeTab; openPlatform(p.id); if (i) showView(keep); }, i * 250)); }
 function navAct(a) {
@@ -310,6 +322,7 @@ document.addEventListener('keydown', e => {
 });
 document.querySelectorAll('.sidebar-btn[data-view]').forEach(b => b.onclick = () => showView(b.dataset.view));
 ipcRenderer.on('open-platform', (_e, id) => openPlatform(id));
+ipcRenderer.on('open-link', (_e, { url, guestId }) => { const from = Object.entries(openTabs).find(([, t]) => { try { return t.webview.getWebContentsId() === guestId; } catch (_) { return false; } }); openLink(url, from ? from[0] : activeTab); });
 ipcRenderer.on('win-state', () => {});
 
 // ---------- boot ----------
