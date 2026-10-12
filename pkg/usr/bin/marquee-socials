@@ -1,0 +1,12 @@
+#!/bin/bash
+APP_DIR="/usr/share/marquee-socials"
+PROFILE_DIR="$HOME/.local/share/marquee-socials/profile"
+mkdir -p "$PROFILE_DIR"
+exec chromium \
+    --app="file://$APP_DIR/index.html" \
+    --user-data-dir="$PROFILE_DIR" \
+    --class=marquee-socials \
+    --window-size=1500,900 \
+    --no-first-run \
+    --no-default-browser-check \
+    "$@"
