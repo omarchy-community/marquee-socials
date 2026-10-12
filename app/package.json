@@ -1,0 +1,34 @@
+{
+  "name": "marquee-socials",
+  "version": "1.0.0",
+  "description": "Manage all your social media accounts in one place",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --linux"
+  },
+  "author": "Omarchy Development Labs",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.3.3",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.omarchy.marquee-socials",
+    "productName": "Marquee Socials",
+    "linux": {
+      "target": [
+        "AppImage",
+        "pacman"
+      ],
+      "category": "Network",
+      "icon": "icons"
+    },
+    "directories": {
+      "output": "dist"
+    }
+  },
+  "allowScripts": {
+    "electron@28.3.3": true
+  }
+}

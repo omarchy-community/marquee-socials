@@ -727,6 +727,7 @@
             telegram: { name: 'Telegram', url: 'https://web.telegram.org', color: '#0088cc' }
         };
         
+        const CHROME_UA = navigator.userAgent.replace(/ ?Electron\/[\d.]+/, '').replace(/ ?marquee-socials\/[\d.]+/, '');
         let openTabs = {};
         let activeTab = 'dashboard';
         let contextMenuPlatform = null;
@@ -774,7 +775,7 @@
                     <div class="spinner"></div>
                     <div class="loading-text">Loading ${p.name}...</div>
                 </div>
-                <webview src="${p.url}" partition="persist:marquee-socials"></webview>
+                <webview src="${p.url}" partition="persist:marquee-socials" useragent="${CHROME_UA}" allowpopups></webview>
             `;
             container.appendChild(wrapper);
             
